@@ -220,13 +220,64 @@ def extract_from_pdf(pdf_path: str) ->list[tuple[str, str, str, str]]:
 
     return rows
 
+def extract_from_pdf_with_links(pdf_path: str):
+    """
+    Extracts LinkedIn connection info (name, title, company, date connected, profile URL)
+    from a PDF saved from LinkedIn connections.
 
+    Args:
+        pdf_path (str): path to the PDF
+
+    Returns:
+        list of tuples: [(name, title, company, date_connected, profile_url), ...]
+    """
+    data = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            # Get all text lines
+            text_lines = [(word["text"], word["doctop"]) for word in page.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=False)]
+            # Get all link annotations
+            links = [annot for annot in page.annots if annot.get("uri")]
+
+            # Simple heuristic: associate the closest link above/below a text line
+            for link in links:
+                link_y = link["doctop"]
+                
+                # Find the closest text line above the link (likely the name)
+                closest_text = min(text_lines, key=lambda x: abs(x[1] - link_y))
+                name_line = closest_text[0]
+
+                # Look for the next 1-2 lines for title/company/date
+                idx = text_lines.index(closest_text)
+                title_company_line = text_lines[idx + 1][0] if idx + 1 < len(text_lines) else ""
+                date_connected_line = text_lines[idx + 2][0] if idx + 2 < len(text_lines) else ""
+
+                # Attempt to split title and company by 'at' or '@'
+                title, company = "", ""
+                if ' at ' in title_company_line:
+                    title, company = title_company_line.split(' at ', 1)
+                elif ' @ ' in title_company_line:
+                    title, company = title_company_line.split(' @ ', 1)
+                else:
+                    title = title_company_line
+                    company = ""
+
+                data.append((
+                    name_line.strip(),
+                    title.strip(),
+                    company.strip(),
+                    date_connected_line.strip(),
+                    link["uri"]
+                ))
+
+    return data
     
 def write_to_csv(data, output_file='LinkedOut_connections_from_pdf.csv'):
     
     with open(output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['Name', 'Title', 'Company', 'Date_connected'])
+        writer.writerow(['Name', 'Title', 'Company', 'Date_Connected','Profile_URL'])
         writer.writerows(data)
         
 
