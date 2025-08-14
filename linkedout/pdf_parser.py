@@ -35,6 +35,7 @@ def extract_from_pdf(pdf_path: str) -> list[str]:
             while i < len(lines) - 1:
                 name = lines[i]
                 title_company = lines[i + 1]
+                date_connected = lines[i + 2]
                 
                 if 'at' in title_company:
                     title, company = title_company.split(' at ', 1)
@@ -57,3 +58,6 @@ def write_to_csv(data, output_file='LinkedOut_connections_from_pdf.csv'):
         
 
 pdf_file = '../test_connections.pdf'
+
+parsed_data = extract_from_pdf(pdf_file)
+write_to_csv(parsed_data)
