@@ -6,6 +6,8 @@ __pycache__/
 # test linkedin connections
 test_connections.pdf
 
+# test csv outputs
+.csv
 # Virtual environments
 .venvlinkedout
 
