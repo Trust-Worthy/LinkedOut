@@ -15,7 +15,7 @@ import pdfplumber
 import csv
 import re
 import pdfplumber
-
+from datetime import datetime
 
 
 # def extract_from_pdf(pdf_path: str) ->list[tuple[str, str, str, str]]:
@@ -202,8 +202,14 @@ def extract_from_pdf(pdf_path: str) ->list[tuple[str, str, str, str]]:
 
                 # Date (if present)
                 date_connected = ""
-                if i < len(lines) and CONNECTED_ON.match(lines[i]):
-                    date_connected = re.sub(r"^Connected on\s+", "", lines[i]).strip()
+                # if i < len(lines) and CONNECTED_ON.match(lines[i]):
+                #     date_connected = re.sub(r"^Connected on\s+", "", lines[i]).strip()
+                #     i += 1
+                    
+                if i < len(lines) and lines[i].startswith("Connected on"):
+                    raw_date = lines[i].replace("Connected on ", "").strip()
+                    dt = datetime.strptime(raw_date, "%B %d, %Y")
+                    date_connected = dt.strftime("%Y-%m-%d")  # standardized
                     i += 1
 
                 # Basic sanity: if name looks like a header or empty, skip
